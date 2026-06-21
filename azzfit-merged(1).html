@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="pl" data-theme="neon">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>azzfit.eu</title>
+    <link id="favicon" rel="icon" type="image/png" href="https://i.imgur.com/2W3n3yd.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* === THEME TOKENS === */
+        /* Green (tox) is the main/default identity. White is the only alt theme. */
+        :root {
+            --bg-base: #020603;
+            --surface: rgba(4, 14, 7, 0.55);
+            --surface-hover: rgba(6, 24, 11, 0.8);
+            --border: rgba(57, 255, 20, 0.18);
+            --border-hover: rgba(57, 255, 20, 0.5);
+            --text-main: #eafff0;
+            --text-muted: #5e8f68;
+            --accent: #39ff14;
+            --accent-glow: rgba(57, 255, 20, 0.55);
+            --blob-1: #39ff14;
+            --blob-2: #003b11;
+            --online: #39ff14;
+
+            --font-main: 'Inter', sans-serif;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        [data-theme="light"] {
+            --bg-base: #f5fbf6;
+            --surface: rgba(255, 255, 255, 0.65);
+            --surface-hover: rgba(255, 255, 255, 0.92);
+            --border: rgba(0, 70, 25, 0.12);
+            --border-hover: rgba(0, 70, 25, 0.3);
+            --text-main: #0c1f10;
+            --text-muted: #4d6b53;
+            --accent: #1fae0a;
+            --accent-glow: rgba(31, 174, 10, 0.25);
+            --blob-1: #39ff14;
+            --blob-2: #bdf5a3;
+            --online: #1fae0a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    /* Ustawienia strony */
+    margin: 0;
+    color: var(--text-main);
+    font-family: var(--font-main);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative; /* Wymagane dla poprawnego pozycjonowania tła */
+    background-color: var(--bg-base); /* Kolor pod spodem, jeśli gif nie załaduje się od razu */
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* Ustawienia tła */
+    background-image: url('https://i.imgur.com/H5fPtwq.gif');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    /* 50% przezroczystości */
+    opacity: 0.5;
+    
+    /* Umieszczenie warstwy pod treścią strony */
+    z-index: -1;
+}
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        /* === BACKGROUND === */
+        .bg-container {
+            position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+            background: radial-gradient(circle at center, transparent 0%, var(--bg-base) 100%);
+        }
+        .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; animation: float 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }
+        .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--blob-1); }
+        .blob-2 { bottom: -10%; right: -10%; width: 40vw; height: 40vw; background: var(--blob-2); animation-delay: -5s; }
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(5vw, 5vh) scale(1.1); }
+            100% { transform: translate(-5vw, -5vh) scale(0.9); }
+        }
+
+        .noise-overlay {
+            position: fixed; inset: 0; z-index: -1; opacity: 0.03; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* === LOADER === */
+        #loader { position: fixed; inset: 0; background: var(--bg-base); z-index: 10000; display: flex; justify-content: center; align-items: center; transition: opacity 0.8s ease, visibility 0.8s; }
+        .spinner { width: 50px; height: 50px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* === LAYOUT === */
+        .app-container { max-width: 680px; margin: 0 auto; padding: 40px 20px 100px; display: flex; flex-direction: column; gap: 24px; }
+        .glass-panel { background: var(--surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1); transition: var(--transition); }
+        .glass-panel:hover { border-color: var(--border-hover); box-shadow: 0 12px 40px 0 var(--accent-glow); }
+
+        /* === HEADER === */
+        .controls-header { display: flex; justify-content: space-between; align-items: center; padding: 0 10px; }
+        .btn-icon { background: none; border: none; color: var(--text-muted); font-size: 18px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .btn-icon:hover { color: var(--accent); background: var(--surface); transform: scale(1.1); }
+        .lang-switch { font-family: var(--font-display); font-weight: 700; font-size: 14px; }
+
+        /* === PROFILE === */
+        .profile-sec { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 40px 20px; position: relative; }
+        .avatar-wrapper { position: relative; margin-bottom: 20px; cursor: pointer; }
+        .avatar-ring { position: absolute; inset: -6px; border-radius: 50%; background: conic-gradient(from 0deg, var(--blob-1), var(--blob-2), var(--blob-1)); animation: rotate-ring 4s linear infinite; z-index: 1; opacity: 0.8; }
+        @keyframes rotate-ring { 100% { transform: rotate(360deg); } }
+        .avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; position: relative; z-index: 2; border: 4px solid var(--bg-base); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .avatar-wrapper:hover .avatar { transform: scale(1.05) rotate(2deg); }
+        .status-dot { position: absolute; bottom: 8px; right: 8px; width: 16px; height: 16px; background: var(--online); border-radius: 50%; z-index: 3; border: 3px solid var(--bg-base); box-shadow: 0 0 10px var(--online); animation: pulse-dot 2s infinite; }
+        @keyframes pulse-dot { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+
+        .name { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--text-main); letter-spacing: -0.5px; margin-bottom: 8px; }
+        .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 100px; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 16px; }
+        .bio { font-size: 16px; color: var(--text-muted); max-width: 85%; line-height: 1.5; }
+
+        .social-row { display: flex; justify-content: center; gap: 14px; margin-top: 22px; }
+        .social-circle { width: 38px; height: 38px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); text-decoration: none; transition: var(--transition); }
+        .social-circle:hover { color: var(--accent); border-color: var(--border-hover); box-shadow: 0 0 16px var(--accent-glow); transform: translateY(-3px); }
+
+        /* === STATS === */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .stat-card { padding: 20px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .stat-val { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+        .stat-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 600; }
+
+        /* === MUSIC PLAYER === */
+        .player-sec { padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; }
+        .player-top { display: flex; align-items: center; justify-content: space-between; }
+        .track-info { display: flex; align-items: center; gap: 16px; min-width: 0; }
+        .cover { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.25); }
+        .t-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .t-artist { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+        .track-badges { display: flex; gap: 6px; margin-top: 6px; }
+        .t-badge { font-family: var(--font-mono); font-size: 9px; font-weight: 700; padding: 2px 6px; border: 1px solid var(--border); border-radius: 4px; color: var(--accent); }
+
+        .eq { display: flex; align-items: flex-end; gap: 2px; height: 12px; }
+        .eq span { width: 3px; background: var(--online); border-radius: 2px; animation: eq-play 0.5s infinite alternate ease-in-out; }
+        .eq span:nth-child(2) { animation-delay: 0.1s; } .eq span:nth-child(3) { animation-delay: 0.2s; }
+        @keyframes eq-play { 0% { height: 20%; } 100% { height: 100%; } }
+        .paused .eq span { animation: none; height: 20%; }
+
+        .play-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--text-main); color: var(--bg-base); border: none; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; flex-shrink: 0; }
+        .play-btn:hover { transform: scale(1.1); }
+
+        .player-progress { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
+        .progress-bar { flex-grow: 1; height: 5px; background: var(--border); border-radius: 3px; position: relative; cursor: pointer; }
+        .progress-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: var(--accent); border-radius: 3px; box-shadow: 0 0 8px var(--accent-glow); transition: width 0.1s linear; pointer-events: none; }
+        .player-volume { display: flex; align-items: center; gap: 8px; }
+        .player-volume i { font-size: 13px; color: var(--text-muted); }
+
+        input[type=range] { -webkit-appearance: none; width: 60px; background: transparent; cursor: pointer; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: var(--border); border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 10px; width: 10px; border-radius: 50%; background: var(--accent); margin-top: -3px; box-shadow: 0 0 5px var(--accent-glow); }
+        input[type=range]:focus { outline: none; }
+
+        /* === LINKS === */
+        .links-grid { display: flex; flex-direction: column; gap: 12px; }
+        .link-card { display: flex; align-items: center; padding: 18px 24px; text-decoration: none; color: var(--text-main); position: relative; overflow: hidden; transition: padding 0.4s cubic-bezier(0.16,1,0.3,1), background 0.3s, transform 0.4s cubic-bezier(0.16,1,0.3,1); }
+        .link-icon { font-size: 20px; width: 40px; color: var(--text-muted); transition: var(--transition); }
+        .link-text { font-family: var(--font-display); font-size: 16px; font-weight: 600; flex-grow: 1; transition: var(--transition); }
+        .link-sub { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+        .link-arrow { font-size: 14px; opacity: 0; transform: translateX(-10px); transition: var(--transition); color: var(--accent); }
+        .link-card:hover .link-icon { color: var(--accent); transform: scale(1.1); }
+        .link-card:hover .link-text { transform: translateX(8px); }
+        .link-card:hover .link-arrow { opacity: 1; transform: translateX(0); }
+
+        .link-card.expanding { padding-top: 26px; padding-bottom: 26px; background: var(--accent); color: var(--bg-base); transform: scale(1.02); }
+        .link-card.expanding .link-icon,
+        .link-card.expanding .link-arrow { color: var(--bg-base); opacity: 1; transform: translateX(0) scale(1.1); }
+        .link-card.expanding .link-text,
+        .link-card.expanding .link-sub { color: var(--bg-base); }
+
+        .ripple { position: absolute; border-radius: 50%; background: var(--accent-glow); transform: scale(0); animation: ripple-anim 0.6s linear; pointer-events: none; }
+        @keyframes ripple-anim { to { transform: scale(4); opacity: 0; } }
+
+        .section-title { font-family: var(--font-display); font-size: 18px; margin: 16px 0 8px; color: var(--text-main); }
+
+        /* === TOAST === */
+        #toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { background: var(--surface); backdrop-filter: blur(10px); border: 1px solid var(--border); padding: 12px 24px; border-radius: 100px; font-weight: 600; font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); animation: slide-up 0.4s ease, fade-out 0.4s ease 2.6s forwards; }
+        @keyframes slide-up { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fade-out { to { opacity: 0; transform: translateY(-10px); } }
+
+        /* === CMD PALETTE === */
+        #cmd-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 100000; display: none; justify-content: center; align-items: flex-start; padding-top: 15vh; opacity: 0; transition: opacity 0.3s; }
+        .cmd-box { width: 90%; max-width: 500px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); overflow: hidden; transform: scale(0.95); transition: transform 0.3s; }
+        .cmd-input { width: 100%; background: none; border: none; padding: 20px; font-size: 18px; color: var(--text-main); border-bottom: 1px solid var(--border); outline: none; font-family: var(--font-main); }
+        .cmd-list { padding: 10px; max-height: 300px; overflow-y: auto; }
+        .cmd-item { padding: 12px 16px; border-radius: 8px; cursor: pointer; color: var(--text-muted); display: flex; gap: 12px; align-items: center; transition: 0.2s; }
+        .cmd-item:hover, .cmd-item.active { background: var(--surface); color: var(--text-main); }
+        .show-cmd { display: flex !important; opacity: 1 !important; }
+        .show-cmd .cmd-box { transform: scale(1); }
+
+        /* === FOOTER === */
+        footer { text-align: center; padding: 24px 0 4px; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 12px; color: var(--text-muted); }
+        .footer-email { display: flex; align-items: center; gap: 8px; color: var(--accent); text-decoration: none; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 1px; transition: 0.2s; }
+        .footer-email:hover { text-shadow: 0 0 10px var(--accent-glow); }
+        .k-bind { display: inline-block; padding: 2px 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; font-family: var(--font-mono); margin: 0 2px; }
+
+        /* === REVEAL === */
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { transition: none; opacity: 1; transform: none; }
+            .blob, .avatar-ring, .status-dot, .eq span { animation: none !important; }
+        }
+
+        @media (max-width: 768px) {
+            .player-volume { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader"><div class="spinner"></div></div>
+
+    <div class="bg-container">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+    <div class="noise-overlay"></div>
+
+    <div id="toast-container"></div>
+
+    <div id="cmd-modal">
+        <div class="cmd-box">
+            <input type="text" class="cmd-input" placeholder="Type a command or search..." readonly>
+            <div class="cmd-list">
+                <div class="cmd-item" onclick="cycleTheme()"><i class="fas fa-moon"></i> Toggle Theme</div>
+                <div class="cmd-item" onclick="cycleLang()"><i class="fas fa-globe"></i> Change Language</div>
+                <div class="cmd-item" onclick="toggleAudio(); closeCmd();"><i class="fas fa-play"></i> Play / Pause Music</div>
+                <div class="cmd-item" onclick="document.getElementById('links').scrollIntoView({behavior: 'smooth'}); closeCmd();"><i class="fas fa-link"></i> Go to Links</div>
+                <div class="cmd-item" onclick="window.open('https://open.spotify.com/artist/1vJnRexjkzusA8ZBZUkp4o','_blank'); closeCmd();"><i class="fab fa-spotify"></i> Open Spotify</div>
+                <div class="cmd-item" onclick="copyEmail(); closeCmd();"><i class="far fa-envelope"></i> Copy Contact Email</div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="bg-music" loop preload="auto">
+        <source src="bomba.mp3" type="audio/mp3">
+    </audio>
+
+    <main class="app-container">
+
+        <header class="controls-header reveal">
+            <button class="btn-icon" id="theme-btn" title="Toggle Theme">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button class="btn-icon lang-switch" id="lang-btn" title="Change Language">PL</button>
+        </header>
+
+        <section class="glass-panel profile-sec reveal">
+            <div class="avatar-wrapper" id="avatar-trigger">
+                <div class="avatar-ring"></div>
+                <img src="https://i.imgur.com/NrCxjmy.jpeg" alt="Azzfit" class="avatar">
+                <div class="status-dot"></div>
+            </div>
+            <h1 class="name">AZZFIT</h1>
+            <div class="badge"><i class="fas fa-bolt"></i> HARDTEKK</div>
+            <p class="bio" data-i18n="bio">WYEBAU BOMBE OUT NOW!</p>
+
+            <div class="social-row">
+                <a href="https://open.spotify.com/artist/1vJnRexjkzusA8ZBZUkp4o" target="_blank" class="social-circle"><i class="fab fa-spotify"></i></a>
+                <a href="https://www.youtube.com/channel/UCzJAnRzRlBHmRpHJBoV81EQ" target="_blank" class="social-circle"><i class="fab fa-youtube"></i></a>
+                <a href="https://soundcloud.com/azzfit1" target="_blank" class="social-circle"><i class="fab fa-soundcloud"></i></a>
+                <a href="https://www.tiktok.com/@azzfitcsx" target="_blank" class="social-circle"><i class="fab fa-tiktok"></i></a>
+                <a href="https://www.instagram.com/azzfitcsx/" target="_blank" class="social-circle"><i class="fab fa-instagram"></i></a>
+            </div>
+        </section>
+
+        <section class="glass-panel player-sec reveal" id="music-player">
+            <div class="player-top">
+                <div class="track-info">
+                    <img src="https://i.imgur.com/98T4a7k.jpeg" alt="WYEBAU BOMBE" class="cover">
+                    <div style="min-width:0;">
+                        <div class="t-title">WYEBAU BOMBE</div>
+                        <div class="t-artist">
+                            Azzfit, Frostekk
+                            <div class="eq paused"><span></span><span></span><span></span></div>
+                        </div>
+                        <div class="track-badges">
+                            <span class="t-badge">NEW</span>
+                            <span class="t-badge">SINGLE</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="play-btn" id="play-btn"><i class="fas fa-play"></i></button>
+            </div>
+            <div class="player-progress">
+                <span id="current-time">0:00</span>
+                <div class="progress-bar" id="progress-container">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <span id="total-time">0:00</span>
+                <div class="player-volume">
+                    <i class="fas fa-volume-down"></i>
+                    <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.5">
+                </div>
+            </div>
+        </section>
+
+        <div class="section-title reveal" data-i18n="links">Linki</div>
+        <section class="links-grid" id="links">
+            <a href="https://ffm.to/wyebau-bombe" target="_blank" class="glass-panel link-card reveal">
+                <i class="fas fa-bolt link-icon"></i>
+                <span class="link-text">WYEBAU BOMBE<span class="link-sub">AZZFIT & FROSTEKK</span></span>
+                <i class="fas fa-arrow-right link-arrow"></i>
+            </a>
+            <a href="https://open.spotify.com/artist/1vJnRexjkzusA8ZBZUkp4o" target="_blank" class="glass-panel link-card reveal">
+                <i class="fab fa-spotify link-icon"></i>
+                <span class="link-text">Spotify</span>
+                <i class="fas fa-arrow-right link-arrow"></i>
+            </a>
+            <a href="https://www.youtube.com/@azzfit1" target="_blank" class="glass-panel link-card reveal">
+                <i class="fab fa-youtube link-icon"></i>
+                <span class="link-text">YouTube</span>
+                <i class="fas fa-arrow-right link-arrow"></i>
+            </a>
+            <a href="https://soundcloud.com/azzfit1" target="_blank" class="glass-panel link-card reveal">
+                <i class="fab fa-soundcloud link-icon"></i>
+                <span class="link-text">SoundCloud</span>
+                <i class="fas fa-arrow-right link-arrow"></i>
+            </a>
+            <a href="https://www.tiktok.com/@azzfitcsx" target="_blank" class="glass-panel link-card reveal">
+                <i class="fab fa-tiktok link-icon"></i>
+                <span class="link-text">TikTok</span>
+                <i class="fas fa-arrow-right link-arrow"></i>
+            </a>
+        </section>
+
+        <footer class="reveal">
+            <a href="mailto:AVEAZZFITMGMT@GMAIL.COM" class="footer-email" id="footer-email">
+                <i class="far fa-envelope"></i> AVEAZZFITMGMT@GMAIL.COM
+            </a>
+            <div>© AZZFIT 2026 — ALL RIGHTS RESERVED.</div>
+            <div><span data-i18n="footer">Naciśnij</span> <span class="k-bind">Ctrl</span> + <span class="k-bind">K</span> <span data-i18n="footer2">aby otworzyć menu</span></div>
+        </footer>
+
+    </main>
+
+    <script>
+        // --- 1. LOADER + AUTOPLAY ---
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader');
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.visibility = 'hidden', 800);
+            }, 500);
+            playMusic();
+        });
+
+        // --- 2. THEME SYSTEM (green = main/default identity, white = alt) ---
+        const themes = ['neon', 'light'];
+        let currentThemeIdx = themes.indexOf(localStorage.getItem('azzfit-theme')) !== -1
+            ? themes.indexOf(localStorage.getItem('azzfit-theme')) : 0;
+        const themeBtn = document.getElementById('theme-btn');
+        const themeIcons = ['fa-bolt', 'fa-sun'];
+
+        function applyTheme(idx) {
+            document.documentElement.setAttribute('data-theme', themes[idx]);
+            themeBtn.innerHTML = `<i class="fas ${themeIcons[idx]}"></i>`;
+            localStorage.setItem('azzfit-theme', themes[idx]);
+        }
+
+        function cycleTheme() {
+            currentThemeIdx = (currentThemeIdx + 1) % themes.length;
+            applyTheme(currentThemeIdx);
+            triggerToast(`Theme: ${themes[currentThemeIdx].toUpperCase()}`);
+            closeCmd();
+        }
+
+        themeBtn.addEventListener('click', cycleTheme);
+        applyTheme(currentThemeIdx);
+
+        // --- 3. LANGUAGE SYSTEM ---
+        const langs = ['PL', 'EN', 'DE'];
+        let langIdx = langs.indexOf(localStorage.getItem('azzfit-lang')) !== -1
+            ? langs.indexOf(localStorage.getItem('azzfit-lang')) : 0;
+        const langBtn = document.getElementById('lang-btn');
+
+        const translations = {
+            PL: {
+                bio: "WYEBAU BOMBE JUŻ DOSTĘPNE!",
+                links: "Linki", footer: "Naciśnij", footer2: "aby otworzyć menu"
+            },
+            EN: {
+                bio: "WYEBAU BOMBE OUT NOW!",
+                links: "Connect", footer: "Press", footer2: "for command menu"
+            },	
+            DE: {
+                bio: "WYEBAU BOMBE JETZT VERFÜGBAR!",
+                links: "Links", footer: "Drücken Sie", footer2: "für das Befehlsmenü"
+            }
+        };
+
+        function applyLang(idx) {
+            const lang = langs[idx];
+            langBtn.innerText = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.style.opacity = 0;
+                setTimeout(() => {
+                    el.innerHTML = translations[lang][key];
+                    el.style.opacity = 1;
+                }, 200);
+            });
+            localStorage.setItem('azzfit-lang', lang);
+        }
+
+        function cycleLang() {
+            langIdx = (langIdx + 1) % langs.length;
+            applyLang(langIdx);
+            triggerToast(`Language: ${langs[langIdx]}`);
+            closeCmd();
+        }
+
+        langBtn.addEventListener('click', cycleLang);
+        applyLang(langIdx);
+
+        // --- 5. LINK CARDS: ripple + expand-down, then redirect ---
+        document.querySelectorAll('.link-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                e.preventDefault();
+                const rect = this.getBoundingClientRect();
+                const ripple = document.createElement('span');
+                ripple.className = 'ripple';
+                ripple.style.left = `${e.clientX - rect.left}px`;
+                ripple.style.top = `${e.clientY - rect.top}px`;
+                this.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 600);
+
+                this.classList.add('expanding');
+                const url = this.getAttribute('href');
+                const target = this.getAttribute('target') || '_self';
+                const cardEl = this;
+                setTimeout(() => {
+                    window.open(url, target);
+                    if (target === '_blank') {
+                        setTimeout(() => cardEl.classList.remove('expanding'), 400);
+                    }
+                }, 380);
+            });
+        });
+
+        // --- 6. MUSIC PLAYER (real audio: WYEBAU BOMBE) ---
+        const music = document.getElementById('bg-music');
+        const playBtn = document.getElementById('play-btn');
+        const eq = document.querySelector('.eq');
+        const progressFill = document.getElementById('progress-fill');
+        const progressContainer = document.getElementById('progress-container');
+        const currentTimeEl = document.getElementById('current-time');
+        const totalTimeEl = document.getElementById('total-time');
+        const volumeSlider = document.getElementById('volume-slider');
+        music.volume = volumeSlider.value;
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        function playMusic() {
+            music.play().then(() => {
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                eq.classList.remove('paused');
+            }).catch(() => {
+                // Browser blocked autoplay — start on the first click/keypress instead
+                const startOnInteraction = () => {
+                    playMusic();
+                    document.removeEventListener('click', startOnInteraction);
+                    document.removeEventListener('keydown', startOnInteraction);
+                };
+                document.addEventListener('click', startOnInteraction, { once: true });
+                document.addEventListener('keydown', startOnInteraction, { once: true });
+            });
+        }
+        function pauseMusic() {
+            music.pause();
+            playBtn.innerHTML = '<i class="fas fa-play"></i>';
+            eq.classList.add('paused');
+        }
+        function toggleAudio() {
+            if (music.paused) playMusic(); else pauseMusic();
+        }
+        playBtn.addEventListener('click', toggleAudio);
+
+        music.addEventListener('timeupdate', () => {
+            if (music.duration) {
+                progressFill.style.width = `${(music.currentTime / music.duration) * 100}%`;
+                currentTimeEl.textContent = formatTime(music.currentTime);
+            }
+        });
+        music.addEventListener('loadedmetadata', () => {
+            totalTimeEl.textContent = formatTime(music.duration);
+        });
+        progressContainer.addEventListener('click', (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            music.currentTime = ((e.clientX - rect.left) / rect.width) * music.duration;
+        });
+        volumeSlider.addEventListener('input', (e) => { music.volume = e.target.value; });
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                if (!music.paused) { music.dataset.wasPlaying = "true"; pauseMusic(); }
+                else { music.dataset.wasPlaying = "false"; }
+            } else if (music.dataset.wasPlaying === "true") {
+                playMusic();
+            }
+        });
+
+        // --- 7. ANIMATED COUNTERS ---
+        const counters = document.querySelectorAll('.stat-val');
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    const target = +el.getAttribute('data-target');
+                    let count = 0;
+                    const increment = target / (2000 / 16);
+                    const updateCount = () => {
+                        count += increment;
+                        if (count < target) {
+                            el.innerText = Math.ceil(count) > 999 ? (Math.ceil(count) / 1000).toFixed(1) + 'K' : Math.ceil(count);
+                            requestAnimationFrame(updateCount);
+                        } else {
+                            el.innerText = target > 999999 ? '1M+' : (target > 999 ? (target / 1000).toFixed(1) + 'K' : target);
+                        }
+                    };
+                    updateCount();
+                    counterObserver.unobserve(el);
+                }
+            });
+        }, { threshold: 0.5 });
+        counters.forEach(c => counterObserver.observe(c));
+
+        // --- 8. REVEAL ON SCROLL ---
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.reveal').forEach(r => revealObserver.observe(r));
+
+        // --- 9. TOAST ---
+        function triggerToast(msg) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function copyEmail() {
+            const email = 'AVEAZZFITMGMT@GMAIL.COM';
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(email).then(() => triggerToast('Email copied to clipboard'));
+            } else {
+                triggerToast(email);
+            }
+        }
+
+        // --- 10. EASTER EGG: 5 clicks on avatar unlocks the tox-green neon mode ---
+        let clicks = 0, clickTimer;
+        document.getElementById('avatar-trigger').addEventListener('click', () => {
+            clicks++;
+            clearTimeout(clickTimer);
+            if (clicks === 5) {
+                triggerToast('💥 HARDTEKK MODE ACTIVATED');
+                currentThemeIdx = themes.indexOf('neon');
+                document.body.style.filter = "invert(1) hue-rotate(180deg)";
+                setTimeout(() => { document.body.style.filter = "none"; applyTheme(currentThemeIdx); }, 600);
+                clicks = 0;
+            }
+            clickTimer = setTimeout(() => { clicks = 0; }, 1000);
+        });
+
+        // --- 11. COMMAND PALETTE (Ctrl/Cmd + K) ---
+        const cmdModal = document.getElementById('cmd-modal');
+        let cmdOpen = false;
+
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); toggleCmd(); }
+            if (e.key === 'Escape' && cmdOpen) closeCmd();
+        });
+
+        function toggleCmd() { cmdOpen ? closeCmd() : openCmd(); }
+        function openCmd() { cmdOpen = true; cmdModal.classList.add('show-cmd'); }
+        function closeCmd() { cmdOpen = false; cmdModal.classList.remove('show-cmd'); }
+        cmdModal.addEventListener('click', (e) => { if (e.target === cmdModal) closeCmd(); });
+
+        document.getElementById('footer-email').addEventListener('click', (e) => {
+            e.preventDefault();
+            copyEmail();
+        });
+    </script>
+</body>
+</html>
